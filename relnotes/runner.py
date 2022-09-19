@@ -117,7 +117,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             info = ent.split("^")
             if len(info) > 1:
                 tag, ct, cname, hsh = info
-                tag = re.match(r"^tag: ([\S,]+)", ent)
+                tag = re.match(r"^tag: ([\S,]+)", tag)
                 if tag:
                     cur_tag = tag[1]
             if ent.startswith(self.notes_dir):
