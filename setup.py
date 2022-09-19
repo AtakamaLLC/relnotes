@@ -15,7 +15,7 @@ def long_description():
 
 setup(
     name="relnotes",
-    version="1.0.0",
+    version="1.0.1",
     description="Release notes manager",
     packages=["relnotes"],
     long_description=long_description(),

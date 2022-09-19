@@ -31,10 +31,11 @@ class Runner:  # pylint: disable=too-many-instance-attributes
     def __init__(self, args):
         self.args = args
         try:
-            self.cfg = yaml.safe_load(open("./reno.yaml"))
+            self.cfg = yaml.safe_load(open("./relnotes.yaml"))
         except FileNotFoundError:
             self.cfg = DEFAULT_CONFIG.copy()
 
+        self.prelude_name = self.cfg.get("prelude_section_name", "release_summary")
         self.earliest = self.cfg.get("earliest_version")
         self.version_regex = (
             args.version_regex
@@ -54,7 +55,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             raise FileNotFoundError("expected folder: %s" % self.notes_dir)
 
         self.sections = dict(self.cfg.get("sections", {}))
-        self.valid_sections = {"release_summary", *self.sections.keys()}
+        self.valid_sections = {self.prelude_name, *self.sections.keys()}
 
         self.__git = shutil.which("git")
 
@@ -200,7 +201,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             print(tag)
             print("=" * len(tag))
 
-            ents = sections.get("release_summary", {})
+            ents = sections.get(self.prelude_name, {})
             for ent in sorted(ents, key=lambda ent: ent["time"], reverse=True):
                 note = ent["note"].strip()
                 print(note, "\n")

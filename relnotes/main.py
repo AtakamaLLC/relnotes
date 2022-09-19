@@ -5,7 +5,7 @@ import logging
 
 log = logging.getLogger("relnotes")
 
-from .runner import Runner
+from relnotes.runner import Runner
 
 
 def parse_args(args):
@@ -17,7 +17,7 @@ def parse_args(args):
         "--previous", help="Previous version, (default: ordinal previous tag)"
     )
     parser.add_argument(
-        "--version-regex", help="Regex to use when parsing (default: from reno.yaml)"
+        "--version-regex", help="Regex to use when parsing (default: from relnotes.yaml)"
     )
     parser.add_argument(
         "--rel-notes-dir", help="Release notes folder", default="./releasenotes"
