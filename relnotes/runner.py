@@ -122,7 +122,6 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                     cur_tag = tag[1]
             if ent.startswith(self.notes_dir):
                 self.logs.append((cur_tag, ct, cname, hsh, ent))
-        log.debug("logs %s", self.logs)
 
     def load_note(self, tag, file, ct, cname, hsh, notes):
         try:
