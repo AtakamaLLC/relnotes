@@ -1,0 +1,12 @@
+# run
+pyyaml
+
+# dev
+pytest
+codecov
+coverage>=5
+pytest-cov
+pylint
+docmd
+black
+pre-commit

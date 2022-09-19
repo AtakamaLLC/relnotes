@@ -1,0 +1,8 @@
+__pycache__
+env
+*.swp
+.coverage
+.idea
+build/
+dist/
+*.egg-info/
