@@ -1,24 +1,21 @@
 """Release notes runner class"""
 import os
-import argparse
-import contextlib
 import os.path
 import re
 import shutil
 import subprocess
 import logging
-import time
 import sys
+import time
 from collections import defaultdict
 
-import pytest
 import yaml.representer
 
 yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
 
 DEFAULT_CONFIG = {"release_tag_re": r"^v?((?:[\d.ab]|rc)+)"}
 
-log = logging.getLogger()
+log = logging.getLogger("relnotes")
 
 
 def normalize(git_dir):
@@ -74,7 +71,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             tag = tag.strip()
             if not tag:
                 continue
-            head = re.match(r"HEAD, tag:", tag)
+            head = re.match(r"HEAD[^,]*, tag:", tag)
             tag = re.search(r"\btag: ([^\s,]+)", tag)
             if not tag:
                 continue
@@ -111,6 +108,8 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         cname = ""
         hsh = ""
         vers = self.ver_start + ".." + self.ver_end
+        if self.ver_start == "TAIL":
+            vers = self.ver_end
         for ent in self.git(
             "log", vers, "--name-only", "--format=%D^%ct^%cn^%h", "--diff-filter=A"
         ).split("\n"):
@@ -167,7 +166,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
 
         cname = self.git("config", "user.name").strip()
 
-        for file in self.git("diff", "--name-only").split("\n"):
+        for file in self.git("diff", "--name-only", "--cached").split("\n"):
             path = file.strip()
             self._load_uncommitted(seen, notes, path, cname)
 
@@ -236,8 +235,37 @@ class Runner:  # pylint: disable=too-many-instance-attributes
     def switch_branch(self, branch):
         self.git("-c", "advice.detachedHead=false", "checkout", branch)
 
+    def create_new(self):
+        from datetime import datetime
+        ymd = datetime.today().strftime('%Y-%m-%d')
+        name = ymd + "-" + os.urandom(8).hex() + ".yaml"
+        fp = os.path.join(self.notes_dir, name)
+        with open(fp, "w", encoding="utf8") as fh:
+            fh.write(self.cfg.get("template"))
+
+        # get editor
+        editor = self.cfg.get("editor." + sys.platform, self.cfg.get("editor", os.environ.get("VISUAL")))
+
+        if not editor:  # pragma: no cover
+            if sys.platform == "win32":
+                editor = "notepad"
+            else:
+                editor = "vi"
+
+        exe = shutil.which(editor)
+        cmd = [exe, fp]
+        subprocess.run(cmd, check=True)
+
+        answer = input("Add to git [y|n]: ")
+        if answer[0].lower() == "y":
+            self.git("add", fp)
+
     def run(self):
         orig = None
+        if self.args.create:
+            self.create_new()
+            return
+
         if self.ver_end != "HEAD":
             orig = self.get_branch()
             self.switch_branch(self.ver_end)

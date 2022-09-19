@@ -28,6 +28,9 @@ def parse_args(args):
         "--lint", help="Lint notes for valid markdown", action="store_true"
     )
     parser.add_argument(
+        "--create", help="Create a new note", action="store_true"
+    )
+    parser.add_argument(
         "--blame", help="Show more commit info in the report", action="store_true"
     )
     return parser.parse_args(args)
