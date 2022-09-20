@@ -3,7 +3,6 @@
 encoding: utf8
 earliest_version: 0.0.1
 release_tag_re: ^((?:[\d.ab]|rc)+)$
-editor.win32: notepad.exe
 sections:
   - [features, New Features]
   - [issues, Known Issues]

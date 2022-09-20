@@ -4,6 +4,9 @@ import yaml
 import sys
 import contextlib
 import pytest
+import logging as log
+
+from unittest.mock import patch
 
 from relnotes import Runner
 from relnotes.runner import normalize
@@ -16,10 +19,14 @@ def test_lint():
     r.run()
 
 
+@patch("relnotes.runner.CONFIG_PATH", "noconf.yaml")
+def test_noconf():
+    args = parse_args(["--lint", "--debug"])
+    r = Runner(args)
+    r.run()
+
+
 def test_report(capsys):
-    src_branch = os.environ.get("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
-    if src_branch and "release-" in src_branch:
-        pytest.skip("Skipping test on release branch")
     args = parse_args([])
     r = Runner(args)
     r.run()
@@ -27,16 +34,126 @@ def test_report(capsys):
     assert "Current Branch" in captured.out
 
 
+@pytest.fixture
+def tmp_run(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    ndir = str(tmp_path / "notes")
+    os.mkdir(ndir)
+    args = parse_args(["--notes-dir", "notes"])
+    r = Runner(args)
+    r.git("init", ".")
+    return r
+
+
+@pytest.fixture
+def tmp_run_with_notes(tmp_run):
+    r = tmp_run
+    ndir = r.notes_dir
+
+    # set up faux notes repo
+    with open(os.path.join(ndir, "note1.yaml"), "w") as n1:
+        n1.write('{"features": ["feature 1"], "release_summary": ["summary 1"]}')
+    r.git("add", "notes")
+    r.git("commit", "-am", ".")
+    r.git("tag", "0.0.1")
+    with open(os.path.join(ndir, "note2.yaml"), "w") as n2:
+        n2.write('{"features": ["feature 2"], "release_summary": "summary 2"}')
+    r.git("add", "notes")
+    r.git("commit", "-am", ".")
+    r.git("tag", "0.0.2")
+
+    yield r
+
+
+def test_head_is_earliest(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+
+    # run report
+    r.run()
+
+    captured = capsys.readouterr()
+    log.debug(captured.out)
+    assert "feature 2" in captured.out
+    assert "feature 1" not in captured.out
+
+    # whole report
+    args = parse_args(["--notes-dir", r.notes_dir, "--yaml", "--previous", "TAIL"])
+    r = Runner(args)
+    r.run()
+    captured = capsys.readouterr()
+    res = yaml.safe_load(captured.out)
+    assert "0.0.1" in res
+    assert "0.0.2" in res
+
+
+def test_missing_note(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+    os.unlink(os.path.join(r.notes_dir, "note1.yaml"))
+    args = parse_args(["--notes-dir", r.notes_dir, "--yaml", "--previous", "TAIL"])
+    r = Runner(args)
+    r.run()
+    captured = capsys.readouterr()
+    res = yaml.safe_load(captured.out)
+    assert "0.0.2" in res
+    assert "0.0.1" not in res
+
+
+def test_blame(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+    os.unlink(os.path.join(r.notes_dir, "note1.yaml"))
+    args = parse_args(["--notes-dir", r.notes_dir, "--blame"])
+    r = Runner(args)
+    r.run()
+    cname = r.git("config", "user.name").strip()
+    captured = capsys.readouterr()
+    assert "0.0.2" in captured.out
+    assert cname in captured.out
+
+
+def test_oldver(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+    args = parse_args(["--notes-dir", r.notes_dir, "--version=0.0.1"])
+    r = Runner(args)
+    assert r.get_branch() == "master"
+    r.run()
+    assert r.get_branch() == "master"
+    captured = capsys.readouterr()
+    assert "0.0.1" in captured.out
+    assert "0.0.2" not in captured.out
+
+
+def test_oldver_error(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+    args = parse_args(["--notes-dir", r.notes_dir, "--version=0.0.1"])
+    assert r.get_branch() == "master"
+    r = Runner(args)
+    r.get_logs = "error"
+    with pytest.raises(TypeError):
+        r.run()
+    assert r.get_branch() == "master"
+
+
 def test_yaml(capsys):
-    src_branch = os.environ.get("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
-    if src_branch and "release-" in src_branch:
-        pytest.skip("Skipping test on release branch")
     args = parse_args(["--yaml"])
     r = Runner(args)
     r.run()
     captured = capsys.readouterr()
     res = yaml.safe_load(captured.out)
     assert res["HEAD"]
+
+
+def test_create(tmp_run, capsys, monkeypatch):
+    monkeypatch.setenv("VISUAL", "type" if sys.platform == "win32" else "echo")
+    monkeypatch.setattr("builtins.input", lambda _: "y\n")
+    args = parse_args(["--create", "--notes-dir", tmp_run.notes_dir])
+    r = Runner(args)
+    r.run()
+    res = r.git("status").strip("\n")
+
+    # new file was made
+    assert "new file" in res
+    assert ".yaml" in res
+    assert tmp_run.notes_dir in res
 
 
 @contextlib.contextmanager

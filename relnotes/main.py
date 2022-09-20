@@ -5,10 +5,11 @@ import logging
 
 log = logging.getLogger("relnotes")
 
-from relnotes.runner import Runner
+from relnotes.runner import Runner, CONFIG_PATH
 
 
 def parse_args(args):
+    config_path = CONFIG_PATH.lstrip("./")
     parser = argparse.ArgumentParser(description="Sane reno reporter")
     parser.add_argument(
         "--version", help="Version to report on (default: current branch)"
@@ -17,19 +18,21 @@ def parse_args(args):
         "--previous", help="Previous version, (default: ordinal previous tag)"
     )
     parser.add_argument(
-        "--version-regex", help="Regex to use when parsing (default: from relnotes.yaml)"
+        "--version-regex",
+        help=f"Regex to use when parsing (default: from {config_path})",
     )
     parser.add_argument(
-        "--rel-notes-dir", help="Release notes folder", default="./releasenotes"
+        "--notes-dir",
+        "--rel-notes-dir",
+        help="Release notes folder",
+        default="./releasenotes",
     )
     parser.add_argument("--debug", help="Debug mode", action="store_true")
     parser.add_argument("--yaml", help="Dump yaml", action="store_true")
     parser.add_argument(
         "--lint", help="Lint notes for valid markdown", action="store_true"
     )
-    parser.add_argument(
-        "--create", help="Create a new note", action="store_true"
-    )
+    parser.add_argument("--create", help="Create a new note", action="store_true")
     parser.add_argument(
         "--blame", help="Show more commit info in the report", action="store_true"
     )
@@ -50,5 +53,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

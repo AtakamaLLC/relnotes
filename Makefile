@@ -18,7 +18,7 @@ black:
 	black relnotes tests
 
 test:
-	pytest --cov relnotes -v tests
+	PYTHONPATH=. pytest --cov relnotes -v tests
 
 publish:
 	rm -rf dist

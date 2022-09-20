@@ -21,7 +21,7 @@ Note history is then easy to extract from git tags and logs.
   --previous PREVIOUS   Previous version, (default: ordinal previous tag)
   --version-regex VERSION_REGEX
                         Regex to use when parsing (default: from relnotes.yaml)
-  --rel-notes-dir REL_NOTES_DIR
+  --notes-dir REL_NOTES_DIR
                         Release notes folder
   --debug               Debug mode
   --yaml                Dump yaml

@@ -13,9 +13,27 @@ import yaml.representer
 
 yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
 
-DEFAULT_CONFIG = {"release_tag_re": r"^v?((?:[\d.ab]|rc)+)"}
+DEFAULT_CONFIG = {
+    "encoding": "utf8",
+    "earliest_version": "0.0.1",
+    "release_tag_re": r"^v?((?:[\d.ab]|rc)+)",
+    "sections": [
+        ["features", "New Features"],
+        ["internal", "Internal Changes"],
+    ],
+    "prelude_section_name": "release_summary",
+    "template": "# Release notes template.\n"
+    "release_summary: >\n"
+    "    Replace this text with content to appear at the\n"
+    "    top of the section for this release.\n"
+    "features:\n"
+    "  - List new features here, or remove this section.\n",
+}
 
 log = logging.getLogger("relnotes")
+
+
+CONFIG_PATH = "./relnotes.yaml"
 
 
 def normalize(git_dir):
@@ -28,7 +46,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
     def __init__(self, args):
         self.args = args
         try:
-            self.cfg = yaml.safe_load(open("./relnotes.yaml"))
+            self.cfg = yaml.safe_load(open(CONFIG_PATH))
         except FileNotFoundError:
             self.cfg = DEFAULT_CONFIG.copy()
 
@@ -45,7 +63,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         self.report = ""
         self.ver_start = self.args.previous
         self.ver_end = self.args.version or "HEAD"
-        self.notes_dir = normalize(self.args.rel_notes_dir)
+        self.notes_dir = normalize(self.args.notes_dir)
 
         log.debug("notes_dir: %s", self.notes_dir)
         if not os.path.exists(self.notes_dir):
@@ -107,9 +125,10 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         ct = 0
         cname = ""
         hsh = ""
-        vers = self.ver_start + ".." + self.ver_end
-        if self.ver_start == "TAIL":
+        if self.ver_start == "TAIL" or not self.ver_start:
             vers = self.ver_end
+        else:
+            vers = self.ver_start + ".." + self.ver_end
         for ent in self.git(
             "log", vers, "--name-only", "--format=%D^%ct^%cn^%h", "--diff-filter=A"
         ).split("\n"):
@@ -117,7 +136,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             info = ent.split("^")
             if len(info) > 1:
                 tag, ct, cname, hsh = info
-                tag = re.match(r"^tag: ([\S,]+)", tag)
+                tag = re.search(r"\btag: ([\S,]+)", tag)
                 if tag:
                     cur_tag = tag[1]
             if ent.startswith(self.notes_dir):
@@ -156,7 +175,8 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         seen = {}
         notes = defaultdict(lambda: defaultdict(lambda: []))
         for tag, ct, cname, hsh, file in self.logs:
-            if seen.get(file):
+            if seen.get(file):  # pragma: no cover
+                # defensive, can happen with weird logs, hard to set up
                 continue
             seen[file] = True
             try:
@@ -241,14 +261,17 @@ class Runner:  # pylint: disable=too-many-instance-attributes
 
     def create_new(self):
         from datetime import datetime
-        ymd = datetime.today().strftime('%Y-%m-%d')
+
+        ymd = datetime.today().strftime("%Y-%m-%d")
         name = ymd + "-" + os.urandom(8).hex() + ".yaml"
         fp = os.path.join(self.notes_dir, name)
         with open(fp, "w", encoding="utf8") as fh:
             fh.write(self.cfg.get("template"))
 
         # get editor
-        editor = self.cfg.get("editor." + sys.platform, self.cfg.get("editor", os.environ.get("VISUAL")))
+        editor = self.cfg.get(
+            "editor." + sys.platform, self.cfg.get("editor", os.environ.get("VISUAL"))
+        )
 
         if not editor:  # pragma: no cover
             if sys.platform == "win32":
@@ -257,8 +280,12 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                 editor = "vi"
 
         exe = shutil.which(editor)
-        cmd = [exe, fp]
-        subprocess.run(cmd, check=True)
+        if exe:
+            cmd = [exe, fp]
+            subprocess.run(cmd, check=True)
+        else:  # pragma: no cover
+            # happens in the windows tests, since they use a cmd builtin
+            subprocess.run(editor + ' "' + fp + '"', check=True, shell=True)
 
         # lint single file
         seen = {}
