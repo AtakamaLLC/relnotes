@@ -8,6 +8,7 @@ import logging
 import sys
 import time
 from collections import defaultdict
+from datetime import datetime
 
 import yaml.representer
 
@@ -37,6 +38,7 @@ CONFIG_PATH = "./relnotes.yaml"
 
 
 def normalize(git_dir):
+    """Normalize to forward slash, strip off ./ from the front."""
     return git_dir.replace("\\", "/").replace("./", "")
 
 
@@ -46,7 +48,8 @@ class Runner:  # pylint: disable=too-many-instance-attributes
     def __init__(self, args):
         self.args = args
         try:
-            self.cfg = yaml.safe_load(open(CONFIG_PATH))
+            with open(CONFIG_PATH, encoding="utf8") as fh:
+                self.cfg = yaml.safe_load(fh)
         except FileNotFoundError:
             self.cfg = DEFAULT_CONFIG.copy()
 
@@ -143,8 +146,9 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                 self.logs.append((cur_tag, ct, cname, hsh, ent))
 
     def load_note(self, tag, file, ct, cname, hsh, notes):
+        """Load specified note into notes list."""
         try:
-            with open(file) as f:
+            with open(file, encoding="utf8") as f:
                 note = yaml.safe_load(f)
                 for k, v in note.items():
                     assert k in self.valid_sections, "%s: %s is not a valid section" % (
@@ -172,6 +176,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             raise
 
     def get_notes(self):
+        """Fill self.notes with a structured list of notes."""
         seen = {}
         notes = defaultdict(lambda: defaultdict(lambda: []))
         for tag, ct, cname, hsh, file in self.logs:
@@ -214,6 +219,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         self.load_note("Uncommitted", path, os.stat(path).st_mtime, cname, None, notes)
 
     def get_report(self):
+        """Turn self.notes into a markdown report."""
         num = 0
         for tag, sections in self.notes.items():
             if tag == "HEAD":
@@ -254,14 +260,15 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                         print("-", note)
 
     def get_branch(self):
+        """Get current branch name."""
         return self.git("rev-parse", "--abbrev-ref", "HEAD").strip()
 
     def switch_branch(self, branch):
+        """Switch current branch."""
         self.git("-c", "advice.detachedHead=false", "checkout", branch)
 
     def create_new(self):
-        from datetime import datetime
-
+        """Create a new note with an editor and prompt for git add."""
         ymd = datetime.today().strftime("%Y-%m-%d")
         name = ymd + "-" + os.urandom(8).hex() + ".yaml"
         fp = os.path.join(self.notes_dir, name)
@@ -299,6 +306,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             self.git("add", fp)
 
     def run(self):
+        """Run the program, with current args."""
         orig = None
         if self.args.create:
             self.create_new()

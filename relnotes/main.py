@@ -1,14 +1,17 @@
+"""relnotes: parse args and main entrypoint"""
+
 import sys
 import argparse
 import subprocess
 import logging
 
-log = logging.getLogger("relnotes")
-
 from relnotes.runner import Runner, CONFIG_PATH
+
+log = logging.getLogger("relnotes")
 
 
 def parse_args(args):
+    """Given args (not cmd name), parse and return the namespace."""
     config_path = CONFIG_PATH.lstrip("./")
     parser = argparse.ArgumentParser(description="Sane reno reporter")
     parser.add_argument(
@@ -40,6 +43,7 @@ def parse_args(args):
 
 
 def main():
+    """Main entry point."""
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     args = parse_args(sys.argv[1:])
     if args.debug:
