@@ -13,7 +13,7 @@ log = logging.getLogger("rnotes")
 def parse_args(args):
     """Given args (not cmd name), parse and return the namespace."""
     config_path = CONFIG_PATH.lstrip("./")
-    parser = argparse.ArgumentParser(description="Sane reno reporter")
+    parser = argparse.ArgumentParser(description="Release notes management and reporting")
     parser.add_argument(
         "--version", help="Version to report on (default: current branch)"
     )
@@ -27,8 +27,7 @@ def parse_args(args):
     parser.add_argument(
         "--notes-dir",
         "--rel-notes-dir",
-        help="Release notes folder",
-        default="./releasenotes",
+        help="Release notes folder (default: releasenotes)",
     )
     parser.add_argument("--debug", help="Debug mode", action="store_true")
     parser.add_argument("--yaml", help="Dump yaml", action="store_true")

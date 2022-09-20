@@ -17,6 +17,7 @@ yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
 DEFAULT_CONFIG = {
     "encoding": "utf8",
     "earliest_version": "0.0.1",
+    "notes_dir": "./releasenotes",
     "release_tag_re": r"^v?((?:[\d.ab]|rc)+)",
     "sections": [
         ["features", "New Features"],
@@ -66,7 +67,8 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         self.report = ""
         self.ver_start = self.args.previous
         self.ver_end = self.args.version or "HEAD"
-        self.notes_dir = normalize(self.args.notes_dir)
+        notes_dir = self.args.notes_dir or self.cfg.get("notes_dir", DEFAULT_CONFIG.get("notes_dir"))
+        self.notes_dir = normalize(notes_dir)
 
         log.debug("notes_dir: %s", self.notes_dir)
         if not os.path.exists(self.notes_dir):
