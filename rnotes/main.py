@@ -1,13 +1,13 @@
-"""relnotes: parse args and main entrypoint"""
+"""rnotes: parse args and main entrypoint"""
 
 import sys
 import argparse
 import subprocess
 import logging
 
-from relnotes.runner import Runner, CONFIG_PATH
+from rnotes.runner import Runner, CONFIG_PATH
 
-log = logging.getLogger("relnotes")
+log = logging.getLogger("rnotes")
 
 
 def parse_args(args):

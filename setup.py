@@ -14,12 +14,13 @@ def long_description():
 
 
 setup(
-    name="relnotes",
+    name="rnotes",
     version="1.0.1",
     description="Release notes manager",
-    packages=["relnotes"],
+    packages=["rnotes"],
     long_description=long_description(),
+    url="https://github.com/AtakamaLLC/rnotes",
     long_description_content_type="text/markdown",
     setup_requires=["wheel"],
-    entry_points={"console_scripts": ["relnotes=relnotes.main:main"]},
+    entry_points={"console_scripts": ["rnotes=rnotes.main:main"]},
 )

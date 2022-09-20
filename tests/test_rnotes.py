@@ -8,9 +8,9 @@ import logging as log
 
 from unittest.mock import patch
 
-from relnotes import Runner
-from relnotes.runner import normalize
-from relnotes.main import parse_args, main
+from rnotes import Runner
+from rnotes.runner import normalize
+from rnotes.main import parse_args, main
 
 
 def test_lint():
@@ -19,7 +19,7 @@ def test_lint():
     r.run()
 
 
-@patch("relnotes.runner.CONFIG_PATH", "noconf.yaml")
+@patch("rnotes.runner.CONFIG_PATH", "noconf.yaml")
 def test_noconf():
     args = parse_args(["--lint", "--debug"])
     r = Runner(args)

@@ -1,4 +1,4 @@
-# relnotes
+# rnotes
 Release notes manager.
 
 This is kindof like reno, except it's faster because it makes some assumptions about git logs,
@@ -13,14 +13,14 @@ The notes relevant to a tag are those committed during that tag's creation.
 Note history is then easy to extract from git tags and logs.
 
 
-### USAGE: relnotes
+### USAGE: rnotes
 
 ```
   -h, --help            show this help message and exit
   --version VERSION     Version to report on (default: current branch)
   --previous PREVIOUS   Previous version, (default: ordinal previous tag)
   --version-regex VERSION_REGEX
-                        Regex to use when parsing (default: from relnotes.yaml)
+                        Regex to use when parsing (default: from rnotes.yaml)
   --notes-dir REL_NOTES_DIR
                         Release notes folder
   --debug               Debug mode
@@ -31,7 +31,7 @@ Note history is then easy to extract from git tags and logs.
 ```
 
 
-### EXAMPLE config: relnotes.yaml
+### EXAMPLE config: rnotes.yaml
 
 ```
 encoding: utf8
@@ -65,4 +65,4 @@ template: |
     - List internal non-user-facing notes here, or remove this section
 ```
 
-[(view source)](https://github.com/atakamallc/relnotes)
+[(view source)](https://github.com/atakamallc/rnotes)

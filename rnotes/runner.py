@@ -31,10 +31,10 @@ DEFAULT_CONFIG = {
     "  - List new features here, or remove this section.\n",
 }
 
-log = logging.getLogger("relnotes")
+log = logging.getLogger("rnotes")
 
 
-CONFIG_PATH = "./relnotes.yaml"
+CONFIG_PATH = "./rnotes.yaml"
 
 
 def normalize(git_dir):
@@ -43,7 +43,7 @@ def normalize(git_dir):
 
 
 class Runner:  # pylint: disable=too-many-instance-attributes
-    """Process relnotes command line args."""
+    """Process rnotes command line args."""
 
     def __init__(self, args):
         self.args = args
