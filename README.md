@@ -8,7 +8,7 @@ and uses current tag state, not branch history.
 The idea is you create a folder with note files, and on your merge CI, you run a linter to ensure that your
 devs are posting release notes.
 
-The notes relevant to a tag are those committed during that tag's creation.
+The notes relevant to a tag are those committed between that tag's creation and the previous tag (if any).
 
 Note history is then easy to extract from git tags and logs.
 
