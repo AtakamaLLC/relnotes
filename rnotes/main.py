@@ -13,7 +13,9 @@ log = logging.getLogger("rnotes")
 def parse_args(args):
     """Given args (not cmd name), parse and return the namespace."""
     config_path = CONFIG_PATH.lstrip("./")
-    parser = argparse.ArgumentParser(description="Release notes management and reporting")
+    parser = argparse.ArgumentParser(
+        description="Release notes management and reporting"
+    )
     parser.add_argument(
         "--version", help="Version to report on (default: current branch)"
     )
