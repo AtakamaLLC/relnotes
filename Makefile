@@ -10,9 +10,6 @@ lint:
 	python -m pylint relnotes
 	black relnotes
 
-docs:
-	PYTHONPATH=. docmd relnotes -u https://github.com/atakamallc/relnotes/blob/master/relnotes > README.md
-
 black:
 	black relnotes tests
 

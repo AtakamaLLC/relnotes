@@ -7,6 +7,5 @@ codecov
 coverage>=5
 pytest-cov
 pylint
-docmd
 black
 pre-commit
