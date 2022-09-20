@@ -6,7 +6,7 @@ make env
 
 . ./env/bin/activate || . ./env/Scripts/activate
 if [ -n "$CI" ]; then
-    git config user.name "test user"
+    git config --global user.name "test user"
 fi
 
 make requirements
