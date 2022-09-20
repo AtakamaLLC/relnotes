@@ -26,12 +26,13 @@ def test_noconf():
     r.run()
 
 
-def test_report(capsys):
-    args = parse_args([])
+def test_report(capsys, tmp_run_with_notes):
+    args = parse_args(["--notes-dir", "notes"])
     r = Runner(args)
     r.run()
     captured = capsys.readouterr()
-    assert "Current Branch" in captured.out
+    assert "0.0.2" in captured.out
+    assert "feature 2" in captured.out
 
 
 @pytest.fixture
@@ -133,13 +134,13 @@ def test_oldver_error(capsys, tmp_run_with_notes):
     assert r.get_branch() == "master"
 
 
-def test_yaml(capsys):
-    args = parse_args(["--yaml"])
+def test_yaml(capsys, tmp_run_with_notes):
+    args = parse_args(["--notes-dir", "notes", "--yaml", "--previous", "TAIL"])
     r = Runner(args)
     r.run()
     captured = capsys.readouterr()
     res = yaml.safe_load(captured.out)
-    assert res["HEAD"]
+    assert res["0.0.1"]
 
 
 def test_create(tmp_run, capsys, monkeypatch):
