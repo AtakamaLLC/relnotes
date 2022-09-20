@@ -14,6 +14,9 @@ lint:
 note:
 	PYTHONPATH=. python rnotes/main.py --create
 
+RELEASE_NOTES:
+	PYTHONPATH=. python rnotes/main.py --previous=TAIL > RELEASE_NOTES
+
 black:
 	black rnotes tests
 
@@ -29,4 +32,4 @@ install-hooks:
 	pre-commit install
 
 
-.PHONY: docs black publish env requirements
+.PHONY: docs black publish env requirements RELEASE_NOTES

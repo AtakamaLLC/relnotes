@@ -152,6 +152,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
     def load_note(self, tag, file, ct, cname, hsh, notes):
         """Load specified note into notes list."""
         try:
+            log.debug("load note: %s, %s", tag, file)
             with open(file, encoding="utf8") as f:
                 note = yaml.safe_load(f)
                 for k, v in note.items():
@@ -175,6 +176,8 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                             "note": line,
                         }
                         notes[tag][k].append(line)
+        except FileNotFoundError:
+            log.debug("ignoring missing file %s", file)
         except Exception as e:
             print("Error reading file %s: %s" % (file, repr(e)))
             raise
@@ -220,6 +223,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             return
         if not path.startswith(self.notes_dir):
             return
+        seen[path] = True
         self.load_note("Uncommitted", path, os.stat(path).st_mtime, cname, None, notes)
 
     def get_report(self):
