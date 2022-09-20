@@ -2,9 +2,12 @@
 
 set -o errexit
 
-python3 -m virtualenv env
+make env
+
 . ./env/bin/activate || . ./env/Scripts/activate
-git config user.name "test user"
+if [ -n "$CI" ]; then
+    git config user.name "test user"
+fi
+
 make requirements
-make lint
 make test
