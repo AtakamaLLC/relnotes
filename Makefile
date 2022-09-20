@@ -9,6 +9,10 @@ requirements:
 lint:
 	python -m pylint relnotes
 	black relnotes
+	PYTHONPATH=. python relnotes/main.py --lint
+
+note:
+	PYTHONPATH=. python relnotes/main.py --create
 
 black:
 	black relnotes tests
