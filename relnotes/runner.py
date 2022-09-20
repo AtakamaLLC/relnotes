@@ -167,7 +167,11 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         cname = self.git("config", "user.name").strip()
 
         for file in self.git("diff", "--name-only", "--cached").split("\n"):
-            path = file.strip()
+            path = normalize(file.strip())
+            self._load_uncommitted(seen, notes, path, cname)
+
+        for porc in self.git("status", "--porcelain").split("\n"):
+            path = normalize(porc[3:].strip())
             self._load_uncommitted(seen, notes, path, cname)
 
         if self.args.lint:
@@ -255,6 +259,13 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         exe = shutil.which(editor)
         cmd = [exe, fp]
         subprocess.run(cmd, check=True)
+
+        # lint single file
+        seen = {}
+        notes = defaultdict(lambda: defaultdict(lambda: []))
+        cname = self.git("config", "user.name").strip()
+
+        self._load_uncommitted(seen, notes, fp, cname)
 
         answer = input("Add to git [y|n]: ")
         if answer[0].lower() == "y":
