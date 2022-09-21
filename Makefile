@@ -10,8 +10,8 @@ lint:
 	python -m pylint rnotes
 	black rnotes
 	PYTHONPATH=. python -mrnotes --lint
-	git fetch origin master
-	echo "BASE REF" $(GITHUB_BASE_REF)
+
+check-notes:
 	PYTHONPATH=. python -mrnotes --check
 
 note:
@@ -35,4 +35,4 @@ install-hooks:
 	pre-commit install
 
 
-.PHONY: docs black publish env requirements RELEASE_NOTES
+.PHONY: docs black publish env requirements RELEASE_NOTES lint check-notes
