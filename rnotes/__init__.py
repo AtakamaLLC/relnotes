@@ -4,3 +4,4 @@ This is kindof like reno, except it's faster because it makes some assumptions a
 
 """
 from .runner import Runner
+from .main import main, parse_args

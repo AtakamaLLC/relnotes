@@ -37,6 +37,8 @@ def parse_args(args):
         "--lint", help="Lint notes for valid markdown", action="store_true"
     )
     parser.add_argument("--create", help="Create a new note", action="store_true")
+    parser.add_argument("--branch-check", help="Check if current branch has a release note", action="store_true")
+    parser.add_argument("--branch-target", help="Target branch for merge (default: from ci env or upstream)", action="store_true")
     parser.add_argument(
         "--blame", help="Show more commit info in the report", action="store_true"
     )
@@ -58,5 +60,4 @@ def main():
         sys.exit(1)
 
 
-if __name__ == "__main__":  # pragma: no cover
-    main()
+
