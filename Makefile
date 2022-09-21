@@ -10,6 +10,8 @@ lint:
 	python -m pylint rnotes
 	black rnotes
 	PYTHONPATH=. python -mrnotes --lint
+	git fetch origin master
+	echo "BASE REF" $(GITHUB_BASE_REF)
 	PYTHONPATH=. python -mrnotes --check
 
 note:
