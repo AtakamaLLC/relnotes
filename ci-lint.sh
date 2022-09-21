@@ -10,6 +10,6 @@ make lint
 
 if [ -n "$GITHUB_BASE_REF" ]; then
     # only check when merging
-    git fetch origin master
+    git fetch origin "$GITHUB_BASE_REF"
     make check-notes
 fi
