@@ -375,46 +375,31 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         # target for diff, in order of precedence
 
         target = self.args.target
+
         target = target or os.environ.get(
             "CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
         )  # gitlab ci
+
         if not target:
             br = os.environ.get("GITHUB_BASE_REF")  # github actions ci
             if br:
                 target = "origin/" + br
-        try:
-            target = (
-                target
-                or self.git(
-                    "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
-                ).strip()
-            )
-        except subprocess.CalledProcessError:
-            pass
+
+        target = target or self.cfg.get("merge-target")
 
         if not target:
-            # no upstream configured, get parent branch
-            # "git log --graph --decorate --simplify-by-decoration --oneline"
-            for ent in self.git(
-                "log", "--graph", "--decorate", "--simplify-by-decoration", "--oneline"
-            ).split("\n"):
-                m = re.search(r"\(([^()]+)\)", ent)
-                if m:
-                    br = m[1]
-                    br = br.split(",")[-1].strip()
-                    if "HEAD" in br:
-                        continue
-                    if "tag:" in br:
-                        continue
-                    target = br
-                    break
+            # no upstream configured, guess
+            for ent in self.git("branch", "-r", "--format", "%(refname:short)", "--list", "origin/ma??*").split("\n"):
+                if ent in ("origin/master", "origin/main"):
+                    target = ent
 
         assert target, self.message(Msg.NEED_TARGET)
 
-        log.debug("using target: %s", target)
         try:
             diff_base = self.git("merge-base", "HEAD", target).strip()
+            print("Check merge target:", target + ", diff base:", diff_base)
         except subprocess.CalledProcessError:
+            print("Check merge target:", target)
             diff_base = target
 
         diff = self.git("diff", "--name-only", "--diff-filter=A", diff_base)
@@ -423,6 +408,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             ent = ent.strip()
             if ent.startswith(self.notes_dir):
                 self.lint_file(ent)
+                print("Found new note:", ent)
                 return
 
         assert False, self.message(Msg.NEED_NOTE)

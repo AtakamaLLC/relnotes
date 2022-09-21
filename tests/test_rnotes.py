@@ -100,7 +100,7 @@ def test_check_branch(capsys, monkeypatch, tmp_run_with_notes):
         fh.write("some file")
     r.git("add", "dev.js")
 
-    args = parse_args(["--notes-dir", r.notes_dir, "--check"])
+    args = parse_args(["--notes-dir", r.notes_dir, "--check", "--target", "master"])
     r = Runner(args)
 
     # this fails, because we're on a new branch, with no notes
@@ -121,6 +121,9 @@ def test_check_branch(capsys, monkeypatch, tmp_run_with_notes):
     # commit doesn't change things
     r.git("commit", "-am", ".")
     r.run()
+
+    # clear stdout
+    capsys.readouterr()
 
     args = parse_args(["--notes-dir", r.notes_dir, "--yaml"])
     r = Runner(args)
