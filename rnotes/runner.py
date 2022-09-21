@@ -412,7 +412,10 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         assert target, self.message(Msg.NEED_TARGET)
 
         log.debug("using target: %s", target)
-        diff_base = self.git("merge-base", "HEAD", target).strip()
+        try:
+            diff_base = self.git("merge-base", "HEAD", target).strip()
+        except subprocess.CalledProcessError:
+            diff_base = target
 
         diff = self.git("diff", "--name-only", "--diff-filter=A", diff_base)
 
