@@ -15,7 +15,7 @@ def long_description():
 
 setup(
     name="rnotes",
-    version="1.1.0",
+    version="1.1.1",
     description="Release notes manager",
     packages=["rnotes"],
     long_description=long_description(),
