@@ -378,7 +378,10 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         target = target or os.environ.get(
             "CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
         )  # gitlab ci
-        target = target or os.environ.get("GITHUB_BASE_REF")  # github ci
+        if not target:
+            br = os.environ.get("GITHUB_BASE_REF")  # github actions ci
+            if br:
+                target = "origin/" + br
         try:
             target = (
                 target
