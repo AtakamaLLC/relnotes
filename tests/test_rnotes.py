@@ -167,7 +167,6 @@ def test_current_branch(capsys, tmp_run_with_notes):
     assert "some stuff" in out
 
 
-
 def test_missing_note(capsys, tmp_run_with_notes):
     r = tmp_run_with_notes
     os.unlink(os.path.join(r.notes_dir, "note1.yaml"))

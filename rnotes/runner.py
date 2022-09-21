@@ -389,7 +389,9 @@ class Runner:  # pylint: disable=too-many-instance-attributes
 
         if not target:
             # no upstream configured, guess
-            for ent in self.git("branch", "-r", "--format", "%(refname:short)", "--list", "origin/ma??*").split("\n"):
+            for ent in self.git(
+                "branch", "-r", "--format", "%(refname:short)", "--list", "origin/ma??*"
+            ).split("\n"):
                 if ent in ("origin/master", "origin/main"):
                     target = ent
 
