@@ -1,3 +1,10 @@
+1.1.1
+=====
+
+Internal Changes
+----------------
+- More feedback to user on branch checking.   More accurate target guesser.
+
 1.1.0
 =====
 
