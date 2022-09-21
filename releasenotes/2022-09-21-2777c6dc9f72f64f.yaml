@@ -1,0 +1,2 @@
+features:
+  - New command --check, to verify that a release note is present on a pull request.

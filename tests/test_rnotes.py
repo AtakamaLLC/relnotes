@@ -9,7 +9,7 @@ import logging as log
 from unittest.mock import patch
 
 from rnotes import Runner
-from rnotes.runner import normalize
+from rnotes.runner import normalize, Msg
 from rnotes.main import parse_args, main
 
 
@@ -87,6 +87,84 @@ def test_head_is_earliest(capsys, tmp_run_with_notes):
     assert "0.0.2" in res
 
 
+def test_check_branch(capsys, monkeypatch, tmp_run_with_notes):
+    # don't use this for this test
+    monkeypatch.delenv("GITHUB_BASE_REF", raising=False)
+    monkeypatch.delenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME", raising=False)
+
+    r = tmp_run_with_notes
+
+    r.git("checkout", "-b", "branch")
+
+    with open("dev.js", "w", encoding="utf8") as fh:
+        fh.write("some file")
+    r.git("add", "dev.js")
+
+    args = parse_args(["--notes-dir", r.notes_dir, "--check"])
+    r = Runner(args)
+
+    # this fails, because we're on a new branch, with no notes
+    with pytest.raises(AssertionError, match=re.escape(r.message(Msg.NEED_NOTE))):
+        r.run()
+
+    with open(r.notes_dir + "/mynote.yaml", "w", encoding="utf8") as fh:
+        fh.write("release_summary: some stuff")
+
+    # not in git
+    with pytest.raises(AssertionError, match=re.escape(r.message(Msg.NEED_NOTE))):
+        r.run()
+
+    # ok, this is good enough
+    r.git("add", r.notes_dir + "/mynote.yaml")
+    r.run()
+
+    # commit doesn't change things
+    r.git("commit", "-am", ".")
+    r.run()
+
+    args = parse_args(["--notes-dir", r.notes_dir, "--yaml"])
+    r = Runner(args)
+    r.run()
+
+    out = capsys.readouterr().out
+    info = yaml.safe_load(out)
+
+    # uncommitted notes go into the HEAD section
+    assert "some stuff" in info["HEAD"]["release_summary"][0]["note"]
+
+
+def test_uncomitted(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+    with open(r.notes_dir + "/mynote.yaml", "w", encoding="utf8") as fh:
+        fh.write("release_summary: some stuff")
+    r.git("add", r.notes_dir + "/mynote.yaml")
+    # uncommitted notes show up in reports too
+    args = parse_args(["--notes-dir", r.notes_dir])
+    r = Runner(args)
+    r.run()
+    out = capsys.readouterr().out
+    assert "Uncommitted" in out
+    assert "Current Branch" not in out
+    assert "some stuff" in out
+
+
+def test_current_branch(capsys, tmp_run_with_notes):
+    r = tmp_run_with_notes
+    with open(r.notes_dir + "/mynote.yaml", "w", encoding="utf8") as fh:
+        fh.write("release_summary: some stuff")
+    r.git("add", r.notes_dir + "/mynote.yaml")
+    r.git("commit", "-am", ".")
+    # uncommitted notes show up in reports too
+    args = parse_args(["--notes-dir", r.notes_dir])
+    r = Runner(args)
+    r.run()
+    out = capsys.readouterr().out
+    assert "Uncommitted" not in out
+    assert "Current Branch" in out
+    assert "some stuff" in out
+
+
+
 def test_missing_note(capsys, tmp_run_with_notes):
     r = tmp_run_with_notes
     os.unlink(os.path.join(r.notes_dir, "note1.yaml"))
@@ -155,6 +233,15 @@ def test_create(tmp_run, capsys, monkeypatch):
     assert "new file" in res
     assert ".yaml" in res
     assert tmp_run.notes_dir in res
+
+    # fname in stdout
+    out = capsys.readouterr().out
+    fn = re.match(r"\bcreated[: ]*([^\n]+)", out, re.I)
+    fn = fn[1]
+    with open(fn, encoding="utf8") as fh:
+        note = yaml.safe_load(fh)
+        assert "release_summary" in note
+        assert "features" in note
 
 
 @contextlib.contextmanager

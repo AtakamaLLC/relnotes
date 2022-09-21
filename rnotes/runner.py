@@ -14,6 +14,14 @@ import yaml.representer
 
 yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
 
+
+class Msg:
+    """Collection of configurable user facing message ids."""
+
+    NEED_NOTE = "need-note"
+    NEED_TARGET = "need-target"
+
+
 DEFAULT_CONFIG = {
     "encoding": "utf8",
     "earliest_version": "0.0.1",
@@ -23,6 +31,10 @@ DEFAULT_CONFIG = {
         ["features", "New Features"],
         ["internal", "Internal Changes"],
     ],
+    "messages": {
+        Msg.NEED_NOTE: "Please create a release note for this branch.",
+        Msg.NEED_TARGET: "No upstream configured or detected, use --target <target>.",
+    },
     "prelude_section_name": "release_summary",
     "template": "# Release notes template.\n"
     "release_summary: >\n"
@@ -290,7 +302,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
 
         if not editor:  # pragma: no cover
             if sys.platform == "win32":
-                editor = "notepad"
+                editor = "notepad.exe"
             else:
                 editor = "vi"
 
@@ -302,22 +314,31 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             # happens in the windows tests, since they use a cmd builtin
             subprocess.run(editor + ' "' + fp + '"', check=True, shell=True)
 
-        # lint single file
+        self.lint_file(fp)
+
+        answer = input("Add to git [y|n]: ")
+        if answer[0].lower() == "y":
+            self.git("add", fp)
+
+        print("Created:", normalize(fp))
+
+    def lint_file(self, fp):
+        """Lint a single file."""
         seen = {}
         notes = defaultdict(lambda: defaultdict(lambda: []))
         cname = self.git("config", "user.name").strip()
 
         self._load_uncommitted(seen, notes, fp, cname)
 
-        answer = input("Add to git [y|n]: ")
-        if answer[0].lower() == "y":
-            self.git("add", fp)
-
     def run(self):
         """Run the program, with current args."""
         orig = None
         if self.args.create:
             self.create_new()
+            return
+
+        if self.args.check:
+            self.branch_check()
             return
 
         if self.ver_end != "HEAD":
@@ -342,3 +363,66 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         finally:
             if orig:
                 self.switch_branch(orig)
+
+    def message(self, msgid):
+        """Get a message based on msgid, uses DEFAULT_CONFIG if not set."""
+        msg = self.cfg.get("messages", {}).get(msgid, None)
+        msg = msg or DEFAULT_CONFIG["messages"][msgid]
+        return msg
+
+    def branch_check(self):
+        """Check current branch for new notes."""
+        # target for diff, in order of precedence
+
+        target = self.args.target
+        target = target or os.environ.get(
+            "CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        )  # gitlab ci
+        if not target:
+            br = os.environ.get("GITHUB_BASE_REF")  # github actions ci
+            if br:
+                target = "origin/" + br
+        try:
+            target = (
+                target
+                or self.git(
+                    "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
+                ).strip()
+            )
+        except subprocess.CalledProcessError:
+            pass
+
+        if not target:
+            # no upstream configured, get parent branch
+            # "git log --graph --decorate --simplify-by-decoration --oneline"
+            for ent in self.git(
+                "log", "--graph", "--decorate", "--simplify-by-decoration", "--oneline"
+            ).split("\n"):
+                m = re.search(r"\(([^()]+)\)", ent)
+                if m:
+                    br = m[1]
+                    br = br.split(",")[-1].strip()
+                    if "HEAD" in br:
+                        continue
+                    if "tag:" in br:
+                        continue
+                    target = br
+                    break
+
+        assert target, self.message(Msg.NEED_TARGET)
+
+        log.debug("using target: %s", target)
+        try:
+            diff_base = self.git("merge-base", "HEAD", target).strip()
+        except subprocess.CalledProcessError:
+            diff_base = target
+
+        diff = self.git("diff", "--name-only", "--diff-filter=A", diff_base)
+
+        for ent in diff.split("\n"):
+            ent = ent.strip()
+            if ent.startswith(self.notes_dir):
+                self.lint_file(ent)
+                return
+
+        assert False, self.message(Msg.NEED_NOTE)

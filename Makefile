@@ -9,13 +9,16 @@ requirements:
 lint:
 	python -m pylint rnotes
 	black rnotes
-	PYTHONPATH=. python rnotes/main.py --lint
+	PYTHONPATH=. python -mrnotes --lint
+	git fetch origin master
+	echo "BASE REF" $(GITHUB_BASE_REF)
+	PYTHONPATH=. python -mrnotes --check
 
 note:
-	PYTHONPATH=. python rnotes/main.py --create
+	PYTHONPATH=. python -mrnotes --create
 
 RELEASE_NOTES:
-	PYTHONPATH=. python rnotes/main.py --previous=TAIL > RELEASE_NOTES
+	PYTHONPATH=. python -mrnotes --previous=TAIL > RELEASE_NOTES
 
 black:
 	black rnotes tests

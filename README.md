@@ -27,6 +27,8 @@ Note history is then easy to extract from git tags and logs.
   --yaml                Dump yaml
   --lint                Lint notes for valid markdown
   --create              Create a new note
+  --check               Check if current branch has a release note
+  --target TARGET       Target branch for merge (default: from ci env or upstream)
   --blame               Show more commit info in the report
 ```
 

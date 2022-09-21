@@ -1,4 +1,4 @@
-"""rnotes: parse args and main entrypoint"""
+"""Functions used by cli: parse_args() and main()"""
 
 import sys
 import argparse
@@ -38,6 +38,16 @@ def parse_args(args):
     )
     parser.add_argument("--create", help="Create a new note", action="store_true")
     parser.add_argument(
+        "--check",
+        help="Check if current branch has a release note",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--target",
+        help="Target branch for merge (default: from ci env or upstream)",
+        action="store",
+    )
+    parser.add_argument(
         "--blame", help="Show more commit info in the report", action="store_true"
     )
     return parser.parse_args(args)
@@ -56,7 +66,3 @@ def main():
     except (subprocess.CalledProcessError, AssertionError) as e:
         print("ERROR:", str(e), file=sys.stderr)
         sys.exit(1)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    main()
