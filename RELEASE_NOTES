@@ -3,7 +3,7 @@
 
 New Features
 ------------
-- New command --branch-check, to verify that a release note is present on a pull request.
+- New command --check, to verify that a release note is present on a pull request.
 - add note linter
 
 Internal Changes

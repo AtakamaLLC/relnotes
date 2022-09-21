@@ -33,7 +33,7 @@ DEFAULT_CONFIG = {
     ],
     "messages": {
         Msg.NEED_NOTE: "Please create a release note for this branch.",
-        Msg.NEED_TARGET: "No upstream configured or detected, use --branch-target <target>.",
+        Msg.NEED_TARGET: "No upstream configured or detected, use --target <target>.",
     },
     "prelude_section_name": "release_summary",
     "template": "# Release notes template.\n"
@@ -337,7 +337,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             self.create_new()
             return
 
-        if self.args.branch_check:
+        if self.args.check:
             self.branch_check()
             return
 
@@ -374,7 +374,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         """Check current branch for new notes."""
         # target for diff, in order of precedence
 
-        target = self.args.branch_target
+        target = self.args.target
         target = target or os.environ.get(
             "CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
         )  # gitlab ci

@@ -96,7 +96,7 @@ def test_check_branch(capsys, tmp_run_with_notes):
         fh.write("some file")
     r.git("add", "dev.js")
 
-    args = parse_args(["--notes-dir", r.notes_dir, "--branch-check"])
+    args = parse_args(["--notes-dir", r.notes_dir, "--check"])
     r = Runner(args)
 
     # this fails, because we're on a new branch, with no notes
