@@ -1,0 +1,3 @@
+# These notes are public facing!!! Write your notes accordingly.
+internal:
+  - More feedback to user on branch checking.   More accurate target guesser.
