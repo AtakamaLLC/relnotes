@@ -87,7 +87,11 @@ def test_head_is_earliest(capsys, tmp_run_with_notes):
     assert "0.0.2" in res
 
 
-def test_check_branch(capsys, tmp_run_with_notes):
+def test_check_branch(capsys, monkeypatch, tmp_run_with_notes):
+    # don't use this for this test
+    monkeypatch.delenv("GITHUB_BASE_REF")
+    monkeypatch.delenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME")
+
     r = tmp_run_with_notes
 
     r.git("checkout", "-b", "branch")
