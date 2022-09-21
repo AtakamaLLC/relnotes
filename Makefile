@@ -10,6 +10,7 @@ lint:
 	python -m pylint rnotes
 	black rnotes
 	PYTHONPATH=. python -mrnotes --lint
+	PYTHONPATH=. python -mrnotes --check
 
 note:
 	PYTHONPATH=. python -mrnotes --create
