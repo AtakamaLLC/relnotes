@@ -16,6 +16,8 @@ yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
 
 
 class Msg:
+    """Collection of configurable user facing message ids."""
+
     NEED_NOTE = "need-note"
     NEED_TARGET = "need-target"
 
@@ -321,7 +323,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         print("Created:", normalize(fp))
 
     def lint_file(self, fp):
-        # lint single file
+        """Lint a single file."""
         seen = {}
         notes = defaultdict(lambda: defaultdict(lambda: []))
         cname = self.git("config", "user.name").strip()
@@ -363,25 +365,36 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                 self.switch_branch(orig)
 
     def message(self, msgid):
+        """Get a message based on msgid, uses DEFAULT_CONFIG if not set."""
         msg = self.cfg.get("messages", {}).get(msgid, None)
         msg = msg or DEFAULT_CONFIG["messages"][msgid]
         return msg
 
     def branch_check(self):
+        """Check current branch for new notes."""
         # target for diff, in order of precedence
 
         target = self.args.branch_target
-        target = target or os.environ.get("CI_MERGE_REQUEST_TARGET_BRANCH_NAME")    # gitlab ci
-        target = target or os.environ.get("GITHUB_BASE_REF")                        # github ci
+        target = target or os.environ.get(
+            "CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        )  # gitlab ci
+        target = target or os.environ.get("GITHUB_BASE_REF")  # github ci
         try:
-            target = target or self.git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}").strip()
+            target = (
+                target
+                or self.git(
+                    "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
+                ).strip()
+            )
         except subprocess.CalledProcessError:
             pass
 
         if not target:
             # no upstream configured, get parent branch
             # "git log --graph --decorate --simplify-by-decoration --oneline"
-            for ent in self.git("log", "--graph", "--decorate", "--simplify-by-decoration", "--oneline").split("\n"):
+            for ent in self.git(
+                "log", "--graph", "--decorate", "--simplify-by-decoration", "--oneline"
+            ).split("\n"):
                 m = re.search(r"\(([^()]+)\)", ent)
                 if m:
                     br = m[1]

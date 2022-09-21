@@ -1,0 +1,27 @@
+1.1.0
+=====
+
+New Features
+------------
+- New command --branch-check, to verify that a release note is present on a pull request.
+- add note linter
+
+Internal Changes
+----------------
+- Debug + no fnf error needed, it's normal
+- Coverage up to 100%, lint done.  Should be good to go for a first version.
+
+1.0.0
+=====
+Initial release 
+
+
+New Features
+------------
+- Add --create option
+
+Internal Changes
+----------------
+- Reorganize stuff, include a setup.py
+- Internal notes, not shown, used for some early tests, can be removed later
+
