@@ -19,8 +19,30 @@ def test_lint():
     r.run()
 
 
+GENERIC_NOTES = [
+    {
+        "name": "note1.yaml",
+        "tag": "0.0.1",
+        "data": {"features": ["feature 1"], "release_summary": ["summary 1"]},
+    },
+    {
+        "name": "note2.yaml",
+        "tag": "0.0.2",
+        "data": {"features": ["feature 2"], "release_summary": ["summary 2"]},
+    },
+]
+
+
+@pytest.fixture
+def tmp_run_noconf(tmp_run_generator):
+    for r in tmp_run_generator(subdir="releasenotes"):
+        gen_notes(r, GENERIC_NOTES)
+        yield r
+
+
 @patch("rnotes.runner.CONFIG_PATH", "noconf.yaml")
-def test_noconf():
+def test_noconf(tmp_run_noconf):
+    r = tmp_run_noconf
     args = parse_args(["--lint", "--debug"])
     r = Runner(args)
     r.run()
@@ -35,35 +57,41 @@ def test_report(capsys, tmp_run_with_notes):
     assert "feature 2" in captured.out
 
 
+def gen_notes(runner, notes):
+    for note in notes:
+        with open(os.path.join(runner.notes_dir, note["name"]), "w") as n1:
+            yaml.dump(note["data"], n1)
+            runner.git("add", runner.notes_dir)
+            runner.git("commit", "-am", ".")
+            if note.get("tag"):
+                runner.git("tag", note["tag"])
+
+
 @pytest.fixture
-def tmp_run(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    ndir = str(tmp_path / "notes")
-    os.mkdir(ndir)
-    args = parse_args(["--notes-dir", "notes"])
-    r = Runner(args)
-    r.git("init", ".")
-    return r
+def tmp_run_generator(tmp_path, monkeypatch):
+    def _gen(*, subdir=None, extra_args=None):
+        subdir = subdir or "notes"
+        monkeypatch.chdir(tmp_path)
+        ndir = str(tmp_path / subdir)
+        os.mkdir(ndir)
+        args = parse_args(["--notes-dir", subdir] + (extra_args if extra_args else []))
+        r = Runner(args)
+        r.git("init", ".")
+
+        yield r
+
+    yield _gen
+
+
+@pytest.fixture
+def tmp_run(tmp_run_generator):
+    yield from tmp_run_generator(subdir="notes")
 
 
 @pytest.fixture
 def tmp_run_with_notes(tmp_run):
-    r = tmp_run
-    ndir = r.notes_dir
-
-    # set up faux notes repo
-    with open(os.path.join(ndir, "note1.yaml"), "w") as n1:
-        n1.write('{"features": ["feature 1"], "release_summary": ["summary 1"]}')
-    r.git("add", "notes")
-    r.git("commit", "-am", ".")
-    r.git("tag", "0.0.1")
-    with open(os.path.join(ndir, "note2.yaml"), "w") as n2:
-        n2.write('{"features": ["feature 2"], "release_summary": "summary 2"}')
-    r.git("add", "notes")
-    r.git("commit", "-am", ".")
-    r.git("tag", "0.0.2")
-
-    yield r
+    gen_notes(tmp_run, GENERIC_NOTES)
+    yield tmp_run
 
 
 def test_head_is_earliest(capsys, tmp_run_with_notes):
