@@ -15,12 +15,13 @@ def long_description():
 
 setup(
     name="rnotes",
-    version="1.1.2",
+    version="1.1.3",
     description="Release notes manager",
     packages=["rnotes"],
     long_description=long_description(),
     url="https://github.com/AtakamaLLC/rnotes",
     long_description_content_type="text/markdown",
     setup_requires=["wheel"],
+    install_requires=["pyyaml"],
     entry_points={"console_scripts": ["rnotes=rnotes.main:main"]},
 )
