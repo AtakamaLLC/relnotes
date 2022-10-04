@@ -3,12 +3,10 @@ repos:
     rev: stable
     hooks:
     - id: black
-    files: .
 -   repo: local
     hooks:
     - id: rnotes
       name: rnotes
       language: system
       entry: python -mrnotes --check
-      files: .
       pass_filenames: false
