@@ -371,10 +371,12 @@ class Runner:  # pylint: disable=too-many-instance-attributes
         return msg
 
     def not_important(self, filename):
+        """True if the filename will be skipped by the branch check."""
         skip = self.cfg.get("skip", [])
         for ent in skip:
-            if re.match(filename, skip):
+            if re.search(ent, filename):
                 return True
+        return False
 
     def branch_check(self):
         """Check current branch for new notes."""
@@ -414,18 +416,20 @@ class Runner:  # pylint: disable=too-many-instance-attributes
             ent = ent.strip()
             if not ent or self.not_important(ent):
                 continue
-            elif ent.startswith(self.notes_dir):
+            if ent.startswith(self.notes_dir):
                 self.lint_file(ent)
                 continue
             log.debug("need notes: %s", ent)
             need_notes = True
 
-        if need_notes:
-            diff = self.git("diff", "--name-only", "--diff-filter=A", diff_base)
-            for ent in diff.split("\n"):
-                ent = ent.strip()
-                if ent.startswith(self.notes_dir):
-                    print("Found new note:", ent)
-                    return
+        if not need_notes:
+            return
+
+        diff = self.git("diff", "--name-only", "--diff-filter=A", diff_base)
+        for ent in diff.split("\n"):
+            ent = ent.strip()
+            if ent.startswith(self.notes_dir):
+                print("Found new note:", ent)
+                return
 
         assert False, self.message(Msg.NEED_NOTE)
