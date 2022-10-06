@@ -77,7 +77,10 @@ def tmp_run_generator(tmp_path, monkeypatch):
         args = parse_args(["--notes-dir", subdir] + (extra_args if extra_args else []))
         r = Runner(args)
         r.git("init", ".")
-
+        with open("README", "w") as fh:
+            fh.write("Readme")
+        r.git("add", "README")
+        r.git("commit", "-am", ".")
         yield r
 
     yield _gen
@@ -124,6 +127,12 @@ def test_check_branch(capsys, monkeypatch, tmp_run_with_notes):
 
     r.git("checkout", "-b", "branch")
 
+    args = parse_args(["--notes-dir", r.notes_dir, "--check", "--target", "master"])
+    r = Runner(args)
+
+    # no error, no diffs
+    r.run()
+
     with open("dev.js", "w", encoding="utf8") as fh:
         fh.write("some file")
     r.git("add", "dev.js")
@@ -162,6 +171,42 @@ def test_check_branch(capsys, monkeypatch, tmp_run_with_notes):
 
     # uncommitted notes go into the HEAD section
     assert "some stuff" in info["HEAD"]["release_summary"][0]["note"]
+
+
+def test_check_ignorables(capsys, tmp_run):
+    r = tmp_run
+    cfg = {
+        "notes_dir": "./notes",
+        "sections": [
+            ["features", "New Features"],
+            ["internal", "Internal Changes"],
+        ],
+        "skip": ["[.](md|txt)$"],
+    }
+
+    with open("rnotes.yaml", "w") as fh:
+        yaml.dump(cfg, fh)
+
+    r.git("checkout", "-b", "branch")
+
+    args = parse_args(["--check", "--target", "master"])
+    r = Runner(args)
+
+    # nothing to check, because no commits in this branch
+    r.run()
+
+    with open("ignored.md", "w") as fh:
+        fh.write("Readme")
+    r.git("add", "ignored.md")
+    r.git("commit", "-am", ".")
+    r.run()
+
+    with open("source.py", "w") as fh:
+        fh.write("import stuff")
+    r.git("add", "source.py")
+    r.git("commit", "-am", ".")
+    with pytest.raises(AssertionError, match=re.escape(r.message(Msg.NEED_NOTE))):
+        r.run()
 
 
 def test_uncomitted(capsys, tmp_run_with_notes):
@@ -240,6 +285,15 @@ def test_oldver_error(capsys, tmp_run_with_notes):
     with pytest.raises(TypeError):
         r.run()
     assert r.get_branch() == "master"
+
+
+def test_yaml(capsys, tmp_run_with_notes):
+    args = parse_args(["--notes-dir", "notes", "--yaml", "--previous", "TAIL"])
+    r = Runner(args)
+    r.run()
+    captured = capsys.readouterr()
+    res = yaml.safe_load(captured.out)
+    assert res["0.0.1"]
 
 
 def test_yaml(capsys, tmp_run_with_notes):

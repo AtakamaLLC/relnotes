@@ -1,0 +1,2 @@
+upgrade:
+  - Checker will not require a note if there are no diffs
