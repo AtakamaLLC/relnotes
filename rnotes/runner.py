@@ -421,6 +421,7 @@ class Runner:  # pylint: disable=too-many-instance-attributes
                 continue
             log.debug("need notes: %s", ent)
             need_notes = True
+            break
 
         if not need_notes:
             return
