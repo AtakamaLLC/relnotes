@@ -1,16 +1,21 @@
 # rnotes
 Release notes manager.
 
-This is kindof like reno, except it's faster because it makes some assumptions about git logs,
-and uses current tag state, not branch history.
+This is kindof like [reno](https://docs.openstack.org/reno/latest/), except it's faster because it makes some assumptions about git logs,
+and uses current tag state, not branch history.  (It's a lot faster, in extreme cases, reno can take 10-15 minutes to compute release notes.)
 
+The idea is you create a folder with note files (default is "release_notes"), and on your merge CI, you run a linter to ensure that your
+devs are posting release notes on every PR (using `rnotes --check`)
 
-The idea is you create a folder with note files, and on your merge CI, you run a linter to ensure that your
-devs are posting release notes.
+`rnotes --create` can be used to interactively create a new note (launches VISUAL or configured editor).
 
 The notes relevant to a tag are those committed between that tag's creation and the previous tag (if any).
 
-Note history is then easy to extract from git tags and logs.
+Note history is then easy to extract from git tags and logs.  
+
+ - Modified notes will retain their position (add time) in the log and association with the closest subsequent tag.
+ - Without arguments, `rnotes` will generate a markdown file
+ - A yaml notes summary can be generated as well (for intermediate processing)
 
 
 ### USAGE: rnotes
